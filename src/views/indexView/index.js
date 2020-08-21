@@ -41,8 +41,6 @@ export default function IndexView() {
 
     return (
         <div id="home">
-            {/* 公用头部 */}
-            <Header />
             <main>
                 <h2>
                     <span className="icon icon-board"></span>

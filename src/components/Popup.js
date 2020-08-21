@@ -1,9 +1,9 @@
 import React, { useEffect, useRef } from "react";
 // import { Link } from "react-router-dom";
 
-export default function Popup (props) {
+export default function Popup(props) {
 
-    let {children, show, setShow, title, content} = props
+    let { children, show, setShow, title, content } = props
 
     // 获取功能弹窗
     let popupRef = useRef(null);
@@ -17,7 +17,7 @@ export default function Popup (props) {
         let Rect = popupRef.current.getBoundingClientRect();
 
         if (Rect.right > window.innerWidth) {
-            popupRef.current.style.left =  - Rect.width + container.current.offsetWidth + "px";
+            popupRef.current.style.left = - Rect.width + container.current.offsetWidth + "px";
         }
     }, [show]);
 
@@ -28,29 +28,34 @@ export default function Popup (props) {
         }
     }, [])
 
-    function closeFn(e){
+    function closeFn(e) {
         // 1. 冒泡队列中存在关闭按钮
         // 2. 冒泡队列中不存在功能弹窗容器
-        // console.log(e);
-        if (e.path.includes(close.current) || !e.path.includes(container.current)) {
+        // 3. 冒泡队列中包含功能弹窗容器中的子类
+        if (
+            e.path.includes(close.current)
+            ||
+            !e.path.includes(container.current)
+            ||
+            e.path.includes(document.querySelector(".popup-menu-list"))) {
             setShow(false)
         }
     }
 
     return (
-        <div className="popup-container" ref = {container}>
+        <div className="popup-container" ref={container}>
             <div>
                 {children}
             </div>
-            <div className="popup" 
+            <div className="popup"
                 style={{
                     display: show ? "block" : "none"
                 }}
-                ref = {popupRef} 
+                ref={popupRef}
             >
                 <div className="popup-header">
                     <span className="popup-title">{title}</span>
-                    <a 
+                    <a
                         ref={close}
                         className="popup-header-close"
                     >

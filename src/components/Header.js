@@ -15,16 +15,16 @@ function Header() {
         {
             name: "注销",
             handler() {
-                // dispatch({
-                //     type: "LOGIN_OUT",
-                // });
+                dispatch({
+                    type: "LOGIN_OUT",
+                });
                 Modal.info({
                     message: "退出成功",
                     ty: "success"
                 });
 
-                // localStorage.removeItem("user");
-                // history.push("/login");
+                localStorage.removeItem("user");
+                history.push("/login");
                 // console.log(111);
             }
         }
