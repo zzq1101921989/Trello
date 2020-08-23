@@ -13,8 +13,6 @@ function useGetBoardApi () {
 
         let res =  await http.get("/board")
 
-        console.log(res);
-
         dispatch({
             type: "GET_BOARD",
             boards: res.data

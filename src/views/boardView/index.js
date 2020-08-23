@@ -1,249 +1,145 @@
-import React from "react";
-import { Link, Route } from "react-router-dom"
+import React, { useEffect, useState, useRef, useMemo } from "react";
+import { Link, Route, useParams } from "react-router-dom"
 import CardView from "../cardView";
+import { useSelector } from "react-redux";
+import {useGetBoardApi} from "../../store/action/board";
+import { useGetBoardListApi, useAddBoardListApi } from "../../store/action/boardList";
+import BoardList from "../../components/BoardList";
+import Modal from "../../components/Message";
 
 export default function BoardView() {
+    // 取出URL参数
+    let { id } = useParams();
+    // 取出所有的面板信息
+    let board = useSelector(state => state.boardReducer);
+    // 取出所有的面板数组下的累加的面板列表信息
+    let boardList = useSelector(state => state.boardListReducer);
+    // 添加列表显示和隐藏状态
+    let [addList, setAddList] = useState({
+        state: false,
+        value: ""
+    });
+    // 获取添加卡片列表的input
+    let addInput = useRef(null);
+    // 通过URL参数 挑选出指定的面板信息
+    let currentBoard = board.boards?.find(item => item.id == id);
+    // 通过URL参数 挑选出和当前面板所对应的面板列表的信息
+    let currentBoardList = boardList.list.filter(item => item.boardId == id);
+    // 请求所有面板
+    const getBoardsApi = useGetBoardApi();
+    // 请求当前面板下的所有列表
+    const getBoardsListApi = useGetBoardListApi();
+    // 添加一条列表的请求
+    const addBoardListApi = useAddBoardListApi();
+
+      // 页面挂载执行事件
+    useEffect(() => {
+        handler();
+    }, [])
+
+    async function handler () {
+        // 防止页面刷新之后，所有面板的信息状态丢失，所以需要判断并进行请求
+        if (board.boards == null) {
+            await getBoardsApi();
+        }
+        if (!currentBoardList.length) {
+            await getBoardsListApi(id);
+        }
+    }
+
+    async function addListHandle () {
+        if (!addList.value.trim().length) {
+            Modal.info({
+                ty: "error",
+                message: "请输入添加列表的标题"
+            })
+        } else {    
+            let res = await addBoardListApi({
+                boardId: Number(id),
+                name: addList.value
+            })
+            if (res) {
+                Modal.info({
+                    ty: "success",
+                    message: "添加成功"
+                })
+                setAddList({
+                    state: false,
+                    value: ""
+                })
+            }
+        }
+    }
+  
     return (    
         <div id="board">
             <main>
                 <h2>
-                    test
-                <span className="btn btn-icon">
-                        邀请
-                </span>
+                    {currentBoard ? currentBoard.name : "加载中..."}
+                    <span className="btn btn-icon">邀请</span>
                 </h2>
                 <div className="board">
-                    <div className="list-wrap">
-                        <div className="list-placeholder"></div>
-                        <div className="list">
-                            <div className="list-header">
-                                <textarea 
-                                    className="form-field-input"
-                                    value="To Do"
-                                ></textarea>
-                                <div className="extras-menu">
-                                    <span className="icon icon-more"></span>
-                                </div>
-                            </div>
-                            <div className="list-cards">
-                                <div className="list-card">
-                                    <div className="list-card-cover"
-                                        style={{
-                                            "backgroundImage": 'url("https://trello-attachments.s3.amazonaws.com/5ddf961b5e861107e5f2de49/200x200/96d8fa19e335be20c102d394ef4bed71/logo.png")'
-                                        }}></div>
-                                    <div className="list-card-title">接口代码编写及测试</div>
-                                    <div className="list-card-badges">
-                                        <div className="badge">
-                                            <span className="icon icon-description"></span>
-                                        </div>
-                                        <div className="badge">
-                                            <span className="icon icon-comment"></span>
-                                            <span className="text">2</span>
-                                        </div>
-                                        <div className="badge">
-                                            <span className="icon icon-attachment"></span>
-                                            <span className="text">5</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="list-card">
-                                    <div className="list-card-title">接口代码编写及测试</div>
-                                    <div className="list-card-badges">
-                                        <div className="badge">
-                                            <span className="icon icon-description"></span>
-                                        </div>
-                                        <div className="badge">
-                                            <span className="icon icon-comment"></span>
-                                            <span className="text">2</span>
-                                        </div>
-                                        <div className="badge">
-                                            <span className="icon icon-attachment"></span>
-                                            <span className="text">5</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="list-card">
-                                    <div className="list-card-cover"
-                                        style={{
-                                            "backgroundImage": 'url(https://trello-attachments.s3.amazonaws.com/5ddf961b5e861107e5f2de49/200x200/96d8fa19e335be20c102d394ef4bed71/logo.png)'
-                                        }}></div>
-                                    <div className="list-card-title">接口代码编写及测试</div>
-                                    <div className="list-card-badges">
-                                        <div className="badge">
-                                            <span className="icon icon-description"></span>
-                                        </div>
-                                        <div className="badge">
-                                            <span className="icon icon-comment"></span>
-                                            <span className="text">2</span>
-                                        </div>
-                                        <div className="badge">
-                                            <span className="icon icon-attachment"></span>
-                                            <span className="text">5</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="list-card">
-                                    <div className="list-card-title">接口代码编写及测试</div>
-                                    <div className="list-card-badges">
-                                        <div className="badge">
-                                            <span className="icon icon-description"></span>
-                                        </div>
-                                        <div className="badge">
-                                            <span className="icon icon-comment"></span>
-                                            <span className="text">2</span>
-                                        </div>
-                                        <div className="badge">
-                                            <span className="icon icon-attachment"></span>
-                                            <span className="text">5</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="list-card">
-                                    <div className="list-card-cover"
-                                        style={{
-                                            "backgroundImage": "url(https://trello-attachments.s3.amazonaws.com/5ddf961b5e861107e5f2de49/200x200/96d8fa19e335be20c102d394ef4bed71/logo.png)"
-                                        }}></div>
-                                    <div className="list-card-title">接口代码编写及测试</div>
-                                    <div className="list-card-badges">
-                                        <div className="badge">
-                                            <span className="icon icon-description"></span>
-                                        </div>
-                                        <div className="badge">
-                                            <span className="icon icon-comment"></span>
-                                            <span className="text">2</span>
-                                        </div>
-                                        <div className="badge">
-                                            <span className="icon icon-attachment"></span>
-                                            <span className="text">5</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="list-card">
-                                    <div className="list-card-cover"
-                                        style={{
-                                            "backgroundImage": "url(https://trello-attachments.s3.amazonaws.com/5ddf961b5e861107e5f2de49/200x200/96d8fa19e335be20c102d394ef4bed71/logo.png)"
-                                        }}></div>
-                                    <div className="list-card-title">接口代码编写及测试</div>
-                                    <div className="list-card-badges">
-                                        <div className="badge">
-                                            <span className="icon icon-description"></span>
-                                        </div>
-                                        <div className="badge">
-                                            <span className="icon icon-comment"></span>
-                                            <span className="text">2</span>
-                                        </div>
-                                        <div className="badge">
-                                            <span className="icon icon-attachment"></span>
-                                            <span className="text">5</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="list-card">
-                                    <div className="list-card-cover"
-                                        style={{
-                                            "backgroundImage": "url(https://trello-attachments.s3.amazonaws.com/5ddf961b5e861107e5f2de49/200x200/96d8fa19e335be20c102d394ef4bed71/logo.png)"
-                                        }}></div>
-                                    <div className="list-card-title">接口代码编写及测试</div>
-                                    <div className="list-card-badges">
-                                        <div className="badge">
-                                            <span className="icon icon-description"></span>
-                                        </div>
-                                        <div className="badge">
-                                            <span className="icon icon-comment"></span>
-                                            <span className="text">2</span>
-                                        </div>
-                                        <div className="badge">
-                                            <span className="icon icon-attachment"></span>
-                                            <span className="text">5</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="list-card-add-form">
-                                    <textarea className="form-field-input" placeholder="为这张卡片添加标题……"></textarea>
-                                </div>
-                            </div>
-                            <div className="list-footer">
-                                <div className="list-card-add">
-                                    <span className="icon icon-add"></span>
-                                    <span>添加另一张卡片</span>
-                                </div>
-                                <div className="list-add-confirm">
-                                    <button className="btn btn-success">添加卡片</button>
-                                    <span className="icon icon-close"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="list-wrap list-adding">
-                        <div className="list-placeholder"></div>
-                        <div className="list">
-                            <div className="list-header">
-                                <textarea className="form-field-input">To Do</textarea>
-                                <div className="extras-menu">
-                                    <span className="icon icon-more"></span>
-                                </div>
-                            </div>
-                            <div className="list-cards">
-                                <div className="list-card">
-                                    <div className="list-card-title">接口代码编写及测试</div>
-                                    <div className="list-card-badges">
-                                        <div className="badge">
-                                            <span className="icon icon-description"></span>
-                                        </div>
-                                        <div className="badge">
-                                            <span className="icon icon-comment"></span>
-                                            <span className="text">2</span>
-                                        </div>
-                                        <div className="badge">
-                                            <span className="icon icon-attachment"></span>
-                                            <span className="text">5</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="list-card-add-form">
-                                    <textarea className="form-field-input" placeholder="为这张卡片添加标题……"></textarea>
-                                </div>
-                            </div>
-                            <div className="list-footer">
-                                <div className="list-card-add">
-                                    <span className="icon icon-add"></span>
-                                    <span>添加另一张卡片</span>
-                                </div>
-                                <div className="list-add-confirm">
-                                    <button className="btn btn-success">添加卡片</button>
-                                    <span className="icon icon-close"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="list-wrap no-content list-adding">
-                        <div className="list-add">
+                    {/* 卡片列表 */}
+                    {currentBoardList?.map(item => {
+                        return  <BoardList
+                                    key={item.id}
+                                    name={item.name}
+                                    {...item}
+                                />
+                    })}
+                    <div className={`list-wrap no-content ${ addList.state ? 'list-adding' : ''} `}>
+                        <div 
+                            className="list-add"
+                            onClick = {() => {
+                                setAddList({
+                                    ...addList,
+                                    state: true
+                                });
+                                setTimeout(() => {
+                                    addInput.current.focus();
+                                })
+                            }}
+                        >
                             <span className="icon icon-add"></span>
                             <span>添加另一个列表</span>
                         </div>
                         <div className="list">
                             <div className="list-cards">
                                 <div className="list-card-add-form">
-                                    <input className="form-field-input" placeholder="为这张卡片添加标题……" />
+                                    <input className="form-field-input" 
+                                    ref={addInput}
+                                    value={addList.value}
+                                    onChange={({target})=>{
+                                        setAddList({
+                                            ...addList,
+                                            value: target.value
+                                        })
+                                    }}
+                                    placeholder="为这张卡片添加标题……" />
                                 </div>
                             </div>
                             <div className="list-footer">
                                 <div className="list-add-confirm">
-                                    <button className="btn btn-success">添加列表</button>
-                                    <span className="icon icon-close"></span>
+                                    <button 
+                                        className="btn btn-success"
+                                        onClick={addListHandle}
+                                    >添加列表</button>
+                                    <span 
+                                        className="icon icon-close"
+                                        onClick={ () => {
+                                            setAddList({
+                                                ...addList,
+                                                state: false
+                                            });
+                                        }}
+                                    ></span>
                                 </div>
                             </div>
-
                         </div>
-
                     </div>
                 </div>
             </main>
-            <div className="popup" style={{
+            {/* <div className="popup" style={{
                 left: "930px",
                 top: "98px",
                 display: "block"
@@ -272,7 +168,7 @@ export default function BoardView() {
                         <li><span>将此列表进行归档</span></li>
                     </ul>
                 </div>
-            </div>
+            </div> */}
             <Route
                 path={"/board/:id(\\d+)/list/:listId(\\d+)/card/:cardId(\\d+)"}
                 exact

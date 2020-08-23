@@ -1,18 +1,20 @@
-export default function boardReducer (state = null, action){
+export default function boardReducer (state = {
+    boards: null
+}, action){
     switch (action.type) {
         case "GET_BOARD":
-            return [
-                ...action.boards
-            ]
+            return {
+                boards: action.boards
+            }
         case "ADD_BOARD":
-            return [
-                ...state,
-                action.data
-            ]
-        // case "DELETE_BOARD":
-        //     return state.filter((item, index) => {
-        //         return 
-        //     })
+            return {
+                boards: [...state.boards, action.data]
+            }
+        case "CLEAR_BOARD":
+            return {
+                boards: null
+            }
+        default:
+            return state;
     }
-    return state
 }

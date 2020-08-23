@@ -4,7 +4,6 @@ html, body {
     font-size: 14px;
     line-height: 20px;
     font-weight: 400;
-    overflow: hidden;
 }
 
 html, body, ul, h1, h2, h3, h4, h5, h6, p {
@@ -21,11 +20,6 @@ u {
 }
 u:hover {
     color: #000;
-}
-
-.App{
-    display: flex;
-    flex-direction: column;
 }
 
 /*icon*/
@@ -121,9 +115,9 @@ textarea, input {
     background: transparent;
     box-sizing: border-box;
     box-shadow: none;
-    cursor: pointer;
     color: #172b4d;
     line-height: 20px;
+    cursor: pointer;
     font-size: 16px;
     font-weight: 600;
     transition: .3s ease;
@@ -283,16 +277,23 @@ message
     color: #909399
 }
 
-.message-fade-exit-active{
-    opacity: 0;
-    transform: translate(-50%, -100%)
-}
-
 .message-fade-enter-done{
     opacity: 0;
     transform: translate(-50%, -100%)
 }
 
+.btn-container{
+    display: flex;
+    justify-content: space-between;
+}
+.btn-container>input{
+    width: 48%;
+    line-height: 25px;
+}
+.btn-container>.btn{
+    width: 48%;
+    line-height: 25px;
+}
 /*
 header
 */
@@ -386,7 +387,6 @@ header .avatar {
     background-color: #FFFFFF;
     border-radius: 3px;
     padding: 25px 40px;
-    margin-top: 30px;
     box-shadow: rgba(0,0,0,0.1) 0 0 10px;
 }
 #register-login h1 {
@@ -406,14 +406,6 @@ header .avatar {
     text-align: center;
 }
 
-.btn-container{
-    display: flex;
-    justify-content: space-between;
-}
-.btn-container .btn{
-    width: 48%;
-}
-
 /*
 home
 */
@@ -428,6 +420,11 @@ home
 #home main h2 .icon {
     color: #0079bf;
     font-size: 1em;
+}
+
+html,
+body{
+    overflow: hidden;
 }
 
 #home .board-items {
@@ -455,8 +452,8 @@ home
     font-size: 16px;
     font-weight: 700;
     word-break: break-all;
-    word-wrap: break-word;
     color: white;
+    box-sizing: border-box;
     text-decoration: none;
 }
 
@@ -476,16 +473,17 @@ board
 */
 #board {
     width: 100%;
-    flex:1;
+    height: 100%;
     display: flex;
     flex-direction: column;
-    background-color: rgb(0, 121, 191);
 }
 #board main {
     display: flex;
     flex-direction: column;
     position: relative;
     padding: 10px;
+    height: 100%;
+    background-color: rgb(0, 121, 191);
 }
 #board main h2 {
     height: 32px;
@@ -493,9 +491,17 @@ board
     color: white;
 }
 
+#root,
+.App{
+    height: 100%;
+    min-width: 1300px;
+}
+
 .board {
     display: flex;
+    margin-top: 15px;
     padding-bottom: 8px;
+    flex: 1;
 }
 .list-wrap {
     position: relative;
@@ -504,7 +510,10 @@ board
     box-sizing: border-box;
     vertical-align: top;
     width: 300px;
+    height: 60%;
+    min-height: 60%;
     border-radius: 3px;
+    overflow: auto;
 }
 .list {
     position: relative;
@@ -619,6 +628,7 @@ board
 }
 .list-card-add {
     display: block;
+    cursor: pointer;
     padding: 0 8px 0 0;
     border-radius: 3px;
     color: #5e6c84;

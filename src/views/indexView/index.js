@@ -13,7 +13,7 @@ export default function IndexView() {
     // 添加一条面板数据 请求
     const addBoardApi = useAddBoardApi();
     // 获取当前用户的面板数据
-    let boards = useSelector(state => state.boardReducer);
+    let { boards } = useSelector(state => state.boardReducer);
     
     useEffect(() => {
         if (boards == null) {

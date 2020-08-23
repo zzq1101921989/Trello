@@ -57,7 +57,7 @@ export default function LoginView() {
                         </div>
                         <div className="btn-container">
                             <input type="submit" className="btn btn-success" value="登录" />
-                            <input type="button" className="btn" value="注册" />
+                            <Link className="btn" to="/register" >注册</Link>
                         </div>
                     </form>
                 </div>

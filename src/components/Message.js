@@ -22,7 +22,6 @@ export default function Modal(props) {
         ty = "success",
         onCancel = function () { }
     } = props;
-
     return (
         <TransitionGroup
             appear={true}
@@ -34,6 +33,7 @@ export default function Modal(props) {
                 timeout={1500}
                 onEntered={(el) => {
                     el.addEventListener('transitionend', function(){
+                        console.log(111)
                         el.parentNode.remove();
                     }, false);
                 }}
@@ -62,19 +62,15 @@ export default function Modal(props) {
         document.body.appendChild(div);
 
         let currentConfig = Object.assign({}, ...props);
-
         // 关闭并且删除节点
         const destroy = () => {
-
             let { onCancel } = currentConfig;
-
             // 调用自定义闯入的方法
             onCancel && onCancel();
-
         }
 
         const render = (config) => {
-            ReactDOM.render(<Modal
+            ReactDOM.render( <Modal
                 {...config}
                 block={true}
                 onCancel={destroy}

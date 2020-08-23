@@ -18,6 +18,9 @@ function Header() {
                 dispatch({
                     type: "LOGIN_OUT",
                 });
+                dispatch({
+                    type: "CLEAR_BOARD",
+                });
                 Modal.info({
                     message: "退出成功",
                     ty: "success"
@@ -25,7 +28,6 @@ function Header() {
 
                 localStorage.removeItem("user");
                 history.push("/login");
-                // console.log(111);
             }
         }
     ]);
@@ -36,13 +38,14 @@ function Header() {
 
         const userInfo = JSON.parse(localStorage.getItem("user"));
 
-        dispatch({
-            type: "LOGIN",
-            id: userInfo.id,
-            name: userInfo.name,
-            token: userInfo.token
-        });
-
+        if (userInfo) {
+            dispatch({
+                type: "LOGIN",
+                id: userInfo.id,
+                name: userInfo.name,
+                token: userInfo.token
+            });
+        }
     }, [])
 
     return (

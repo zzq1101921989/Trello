@@ -8,7 +8,7 @@ export default function PopupMenu(props) {
         <div className="popup-content">
             <ul className="popup-menu-list">
                 {
-                    items.map( (item, index) => {
+                    items?.map( (item, index) => {
                         return (
                             item.separator ? 
                             <li key={ index } className="separator"></li> : 
