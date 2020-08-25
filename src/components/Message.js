@@ -33,7 +33,6 @@ export default function Modal(props) {
                 timeout={1500}
                 onEntered={(el) => {
                     el.addEventListener('transitionend', function(){
-                        console.log(111)
                         el.parentNode.remove();
                     }, false);
                 }}

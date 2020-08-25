@@ -13,10 +13,20 @@ export default function boardListReducer (state = {
         case "UPDATE_BOARD_LIST":
             state.list = state.list.map(item =>{
                 if (item.id == action.list.id) {
-                    return item = action.list
+                    return action.list;
                 }
                 return item;
             })
+            // 如果存在listNewIndex就证明进行了列表调换更新
+            if ( action.listNewIndex >= 0 ) {
+                // 拿出旧的位置
+                let oldIndex = state.list.findIndex(item => item.id == action.list.id);
+                let oldList = state.list[action.listNewIndex];
+
+                // 进行新旧位置的调换赋值
+                state.list[oldIndex] = oldList
+                state.list[action.listNewIndex] = action.list;
+            }
             return state;
     }
     return state;

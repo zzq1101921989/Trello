@@ -31,7 +31,6 @@ const routers_main = [
             } else if (!localStorage.getItem("user")) {
                 return <Redirect to="/login" />
             }
-
             return <View404/>
         },
     },{

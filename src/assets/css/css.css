@@ -501,6 +501,7 @@ board
     display: flex;
     margin-top: 15px;
     padding-bottom: 8px;
+    align-items: flex-start;
     flex: 1;
 }
 .list-wrap {
@@ -510,8 +511,7 @@ board
     box-sizing: border-box;
     vertical-align: top;
     width: 300px;
-    height: 60%;
-    min-height: 60%;
+    max-height: 80%;
     border-radius: 3px;
     overflow: auto;
 }

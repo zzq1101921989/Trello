@@ -12,6 +12,8 @@ export function useGetBoardListApi() {
 
         let res = await http.get(`/list?boardId=${id}`);
 
+        console.log("res:", res)
+        
         dispatch({
             type: "GET_BOARD_LIST",
             list: res.data
@@ -43,10 +45,15 @@ export function useAddBoardListApi() {
 }
 
 /**
- * 修改面板列表的标题
+ * 修改面板列表的信息 （标题，排序 order）
+ * id: 面板中某个列表 id
+ * boardId: 当前面板 id
+ * name: 面板中某个列表 name
+ * order: 面板中某个列表 order
+ * listNewIndex: 不属于需要上传到后端的字段，是为了标识列表移动后所在的索引位置
  */
 
-export function useEditBoardListNameApi() {
+export function useEditBoardListApi() {
 
     const dispatch = useDispatch();
 
@@ -55,12 +62,14 @@ export function useEditBoardListNameApi() {
         try {
             let res = await http.put(`/list/${data.id}`, {
                 boardId: data.boardId,
-                name: data.name,
+                name: data.name || "",
+                order: data.order
             });
-    
+
             dispatch({
                 type: "UPDATE_BOARD_LIST",
-                list: res.data
+                list: res.data,
+                listNewIndex: (data.listNewIndex >= 0) ? data.listNewIndex : undefined
             })
 
             return res;

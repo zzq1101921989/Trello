@@ -21,7 +21,6 @@ export default function RegisterView() {
     }
     return (
         <Fragment>
-            {/* <Modal></Modal> */}
             <div id="register-login">
                 <Link className="logo" to="/"></Link>
                 <div className="section-wrapper">

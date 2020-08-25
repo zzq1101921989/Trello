@@ -1,11 +1,14 @@
 import React, { useEffect, useState, useRef, useMemo } from "react";
-import { Link, Route, useParams } from "react-router-dom"
+import { Route, useParams } from "react-router-dom"
 import CardView from "../cardView";
 import { useSelector } from "react-redux";
 import {useGetBoardApi} from "../../store/action/board";
-import { useGetBoardListApi, useAddBoardListApi } from "../../store/action/boardList";
+import { useGetBoardListApi, useAddBoardListApi, useEditBoardListApi } from "../../store/action/boardList";
 import BoardList from "../../components/BoardList";
 import Modal from "../../components/Message";
+
+// 记录boardList的历史位置
+let recordBoardListIndex;
 
 export default function BoardView() {
     // 取出URL参数
@@ -31,13 +34,16 @@ export default function BoardView() {
     const getBoardsListApi = useGetBoardListApi();
     // 添加一条列表的请求
     const addBoardListApi = useAddBoardListApi();
+    // 请求修改面板中某个列表的信息
+    const updateBoardListApi = useEditBoardListApi();
 
       // 页面挂载执行事件
     useEffect(() => {
-        handler();
+        loadingBoardListHandler();
     }, [])
 
-    async function handler () {
+    // 加载面板列表
+    async function loadingBoardListHandler () {
         // 防止页面刷新之后，所有面板的信息状态丢失，所以需要判断并进行请求
         if (board.boards == null) {
             await getBoardsApi();
@@ -47,6 +53,7 @@ export default function BoardView() {
         }
     }
 
+    // 添加列表的处理事件
     async function addListHandle () {
         if (!addList.value.trim().length) {
             Modal.info({
@@ -70,7 +77,89 @@ export default function BoardView() {
             }
         }
     }
-  
+    
+    // 监听board组件按下
+    function addEventBoardStart (moveList) {
+
+        let boardListArr = [...document.querySelectorAll(".list-wrap")];
+
+        let currentIndex = boardListArr.findIndex(item => item == moveList);
+
+        recordBoardListIndex = currentIndex;
+    }
+
+    // 监听board组件移动
+    function addEventBoardMove (moveList, x, y) {
+
+        let boardListArr = [...document.querySelectorAll(".list-wrap")];
+
+        let boardContainer = moveList.parentNode;
+
+        let currentIndex = boardListArr.findIndex(item => item == moveList);
+
+        boardListArr.forEach( (item, index) => {
+
+            if (index !== currentIndex) {
+                
+                let clientRect = item.getBoundingClientRect();
+                
+                if ( 
+                    x <= clientRect.right 
+                    &&  
+                    x >= clientRect.left
+                    && 
+                    y <= clientRect.bottom
+                    &&
+                    y >= clientRect.top
+                    ) {
+                    if (currentIndex < index) {
+                        boardContainer.insertBefore(moveList, item.nextElementSibling);
+                    } else {
+                        boardContainer.insertBefore(moveList, item);
+                    }
+                }                
+            }
+        })
+    }
+
+    // 监听board组件抬起 (列表排序)
+    async function addEventBoardUp (moveList) {
+       
+        let order;
+
+        let boardListArr = [...document.querySelectorAll(".list-container")];
+
+        let currentIndex = boardListArr.findIndex(item => item == moveList);
+
+        if ( currentIndex !== recordBoardListIndex ) {
+
+            // 获取上一个和下一个的order数值
+            let prevOrder = parseFloat(boardListArr[currentIndex - 1]?.dataset.order);
+            let nextOrder = parseFloat(boardListArr[currentIndex + 1]?.dataset.order);
+
+            if ( currentIndex === 0 ) {
+                order = nextOrder / 2;
+            } else if ( currentIndex === boardListArr.length - 1 ) {
+                order = prevOrder + 65535;
+            } else {
+                order = prevOrder + ( nextOrder - prevOrder ) / 2;
+            }
+
+            // 获取绑定在元素上的数据
+            let listId =  parseFloat(boardListArr[currentIndex].dataset.id);
+            let name = boardListArr[currentIndex].querySelector(".form-field-input").innerHTML;
+
+            await updateBoardListApi({
+                id: listId,
+                boardId: parseInt(id),
+                name,
+                order,
+                listNewIndex: currentIndex
+            })
+        }
+
+    }
+
     return (    
         <div id="board">
             <main>
@@ -83,7 +172,9 @@ export default function BoardView() {
                     {currentBoardList?.map(item => {
                         return  <BoardList
                                     key={item.id}
-                                    name={item.name}
+                                    addEventBoardStart={addEventBoardStart}
+                                    addEventBoardMove={addEventBoardMove}
+                                    addEventBoardUp={addEventBoardUp}
                                     {...item}
                                 />
                     })}

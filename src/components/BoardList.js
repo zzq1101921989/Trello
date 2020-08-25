@@ -1,10 +1,12 @@
 import React, { useRef, useEffect, useState  } from "react";
-import { useEditBoardListNameApi } from "../store/action/boardList";
+import { useEditBoardListApi } from "../store/action/boardList";
+import { useGetBoardListCardsApi } from "../store/action/boardListCard"
+import BoardListCard from "./BoardListCard";
 import Modal from "../components/Message";
 
 export default function BoardList(props) {
 
-    let { name, id, boardId } = props;
+    let { name, id, boardId, addEventBoardMove, addEventBoardStart, addEventBoardUp, order, cards } = props;
     // 定义标题 value
     let [listValue, setListValue] = useState(name);
     // 定义列表添加卡片状态
@@ -16,7 +18,9 @@ export default function BoardList(props) {
     // 定义输入框是否被选中状态
     let [isSelect, setSelect] = useState(false);
     // 修改标题 API
-    let updateBoardListNameApi = useEditBoardListNameApi();
+    let updateBoardListNameApi = useEditBoardListApi();
+    // 获取列表中所有卡片的信息
+    // let getBoardListCardApi = useGetBoardListCardsApi();
     // 保存偏移相关的变量
     let dragOffset = useRef({
         x: 0,
@@ -35,7 +39,7 @@ export default function BoardList(props) {
     let listText = useRef(null);
     // 获取列表阴影
     let listMask = useRef(null);
-
+    // 生命周期
     useEffect(() => {
         listHeader.current.onmousedown = dragDown;
         document.onmousemove = dragMove;
@@ -47,6 +51,7 @@ export default function BoardList(props) {
         }
     }, [isDown, isDrag, isSelect]);
 
+    // 按下
     function dragDown(e) {
         // 多给定一个条件减少重复渲染，因为不拖拽修改标题的时候点击也会触发更新，所以需要判断
         if (!isSelect){
@@ -56,11 +61,11 @@ export default function BoardList(props) {
             dragOffset.current.y = e.clientY;
             eleOffset.current.left = rect.x;
             eleOffset.current.top = rect.y;
+            addEventBoardStart(list.current.parentNode)
         }
     };
-
+    // 拖拽
     function dragMove(e) {
-        
         if (isDown) {
             let x = e.clientX - dragOffset.current.x;
             let y = e.clientY - dragOffset.current.y;
@@ -70,13 +75,15 @@ export default function BoardList(props) {
                     list.current.style.position = "fixed";
                     list.current.style.zIndex = 666;
                     list.current.style.transform = "rotate(5deg)";
-                    listMask.current.style.height = list.current.offsetHeight + "px"
+                    listMask.current.style.height = list.current.offsetHeight + "px";
                 }
-                list.current.style.left = eleOffset.current.left + x + "px"
-                list.current.style.top = eleOffset.current.top + y + "px"
+                list.current.style.left = eleOffset.current.left + x + "px";
+                list.current.style.top = eleOffset.current.top + y + "px";
+                addEventBoardMove(list.current.parentNode, e.clientX, e.clientY);
             }
         }
     };
+    // 抬起
     function dragUp() {
         if (!isDrag && isDown) {
             listText.current.select();
@@ -88,6 +95,7 @@ export default function BoardList(props) {
             list.current.style.top = 0;
             list.current.style.transform = 'rotate(0deg)';
             listMask.current.style.height = 0;
+            addEventBoardUp(list.current.parentNode);
         }
 
         document.onmousedown = null;
@@ -95,7 +103,6 @@ export default function BoardList(props) {
         setDown(false);
         setDrag(false);
     }
-
     // 列表标题失去焦点处理事件
     async function textareaBlurHandle () {
 
@@ -120,13 +127,14 @@ export default function BoardList(props) {
 
     return (
         <div
-            className={`list-wrap ${addCard ? 'list-adding' : ''}`}
+            className={`list-wrap list-container ${addCard ? 'list-adding' : ''}`}
+            data-order={order}
+            data-id={id}
         >
             <div className="list-placeholder" ref={listMask}></div>
             <div className="list" ref={list}>
                 {/* 卡片列表头部 */}
-                <div
-                    className="list-header"
+                <div className="list-header"
                     ref={listHeader}
                 >
                     <textarea
@@ -147,31 +155,7 @@ export default function BoardList(props) {
                     </div>
                 </div>
                 {/* 卡片列表内容 */}
-                <div className="list-cards">
-                    <div className="list-card">
-                        <div className="list-card-cover"
-                            style={{
-                                "backgroundImage": 'url("https://trello-attachments.s3.amazonaws.com/5ddf961b5e861107e5f2de49/200x200/96d8fa19e335be20c102d394ef4bed71/logo.png")'
-                            }}></div>
-                        <div className="list-card-title">接口代码编写及测试</div>
-                        <div className="list-card-badges">
-                            <div className="badge">
-                                <span className="icon icon-description"></span>
-                            </div>
-                            <div className="badge">
-                                <span className="icon icon-comment"></span>
-                                <span className="text">2</span>
-                            </div>
-                            <div className="badge">
-                                <span className="icon icon-attachment"></span>
-                                <span className="text">5</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="list-card-add-form">
-                        <textarea className="form-field-input" placeholder="为这张卡片添加标题……"></textarea>
-                    </div>
-                </div>
+                <BoardListCard cards={cards} />
                 {/* 卡片列表尾部 */}
                 <div className="list-footer">
                     <div className="list-card-add">

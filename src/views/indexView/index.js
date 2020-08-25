@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom"
-import Header from "../../components/Header";
 import { useGetBoardApi, useAddBoardApi } from "../../store/action/board";
 import { useSelector } from "react-redux";
 import Modal from "../../components/Message";
