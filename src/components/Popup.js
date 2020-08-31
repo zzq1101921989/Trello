@@ -17,7 +17,13 @@ export default function Popup(props) {
         let Rect = popupRef.current.getBoundingClientRect();
 
         if (Rect.right > window.innerWidth) {
+
             popupRef.current.style.left = - Rect.width + container.current.offsetWidth + "px";
+            
+        } else {
+            popupRef.current.style.top = container.current.offsetHeight + "px"
+            popupRef.current.style.left = - Rect.width + 26 + "px";
+            popupRef.current.style.width = "200px"
         }
     }, [show]);
 

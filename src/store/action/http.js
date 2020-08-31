@@ -1,5 +1,4 @@
 import axios from "axios";
-import Message from "../../components/Message2";
 import Modal from "../../components/Message";
 
 const http = axios.create({

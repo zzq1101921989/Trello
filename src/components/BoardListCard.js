@@ -1,18 +1,33 @@
 import React from "react";
+import { Link } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 export default function BoardListCard(props) {
 
-    let { cards } = props;
+    let { cards, boardId, boardListId } = props;
+
+    // 环境变量获取
+    const { staticPath } = useSelector(state => state.serverPath);
 
     return (
         cards ? cards.map(item => {
             return (
-                <div key={item.id} className="list-cards">
+                <Link 
+                    key={item.id} 
+                    className="list-cards"
+                    to={`/board/${boardId}/list/${boardListId}/card/${item.id}`}
+                >
                     <div className="list-card">
-                        <div className="list-card-cover"
-                            style={{
-                                "backgroundImage": 'url("https://trello-attachments.s3.amazonaws.com/5ddf961b5e861107e5f2de49/200x200/96d8fa19e335be20c102d394ef4bed71/logo.png")'
-                            }}></div>
+                        {
+                            item.coverPath 
+                            ? 
+                            <div className="list-card-cover"
+                                style={{
+                                    "background": `url(${staticPath}${item.coverPath}) no-repeat center center`,
+                                    "backgroundSize": "100%"
+                                }}> 
+                            </div> : ""
+                        }
                         <div className="list-card-title">{item.name}</div>
                         <div className="list-card-badges">
                             { item.description ? <div className="badge">
@@ -22,7 +37,7 @@ export default function BoardListCard(props) {
                                 <span className="icon icon-comment"></span>
                                 <span className="text">
                                     {
-                                    item.comment.length ? item.comment.length : 0 
+                                    item.commentCount ? item.commentCount : 0 
                                     }
                                 </span>
                             </div>
@@ -36,10 +51,7 @@ export default function BoardListCard(props) {
                             </div>
                         </div>
                     </div>
-                    <div className="list-card-add-form">
-                        <textarea className="form-field-input" placeholder="为这张卡片添加标题……"></textarea>
-                    </div>
-                </div>
+                </Link>
             )
         }) : null
     )

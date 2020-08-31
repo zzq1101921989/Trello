@@ -17,10 +17,11 @@ export default function boardListReducer (state = {
                 }
                 return item;
             })
-            // 如果存在listNewIndex就证明进行了列表调换更新
+            // 如果存在 listNewIndex就证明进行了列表调换更新
             if ( action.listNewIndex >= 0 ) {
                 // 拿出旧的位置
                 let oldIndex = state.list.findIndex(item => item.id == action.list.id);
+                // 拿出新位置上面之前存在的需要被替换的元素
                 let oldList = state.list[action.listNewIndex];
 
                 // 进行新旧位置的调换赋值

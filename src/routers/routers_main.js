@@ -15,7 +15,7 @@ const routers_main = [
         name: "首页",
         render(props) {
             if (localStorage.getItem("user")) {
-                return <Home/>
+                return <Home {...props} />
             }else{
                 return <Redirect to="/login" />
             }
@@ -27,7 +27,7 @@ const routers_main = [
         render(props) {
             let { id } = props.match.params;
             if ( typeof Number(id) === "number" && localStorage.getItem("user") ) {
-                return <Board/>
+                return <Board {...props} />
             } else if (!localStorage.getItem("user")) {
                 return <Redirect to="/login" />
             }
@@ -38,11 +38,13 @@ const routers_main = [
         exact: true,
         name: "面板详情",
         render(props) {
-            if (localStorage.getItem("user")) {
-                return <Card/>
-            }else{
+            let { id, listId, cardId } = props.match.params;
+            if (typeof Number(id) === "number" && typeof Number(listId) === "number" && typeof Number(cardId) === "number"  && localStorage.getItem("user")) {
+                return <Card {...props} />
+            }else if (!localStorage.getItem("user")) {
                 return <Redirect to="/login" />
             }
+            return <View404/>
         },
     },{
         path: '/register',

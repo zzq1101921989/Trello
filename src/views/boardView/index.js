@@ -22,6 +22,7 @@ export default function BoardView() {
         state: false,
         value: ""
     });
+
     // 获取添加卡片列表的input
     let addInput = useRef(null);
     // 通过URL参数 挑选出指定的面板信息
@@ -85,6 +86,7 @@ export default function BoardView() {
 
         let currentIndex = boardListArr.findIndex(item => item == moveList);
 
+        // 当按下的时候记录一下当前的初始移动位置
         recordBoardListIndex = currentIndex;
     }
 
@@ -131,12 +133,14 @@ export default function BoardView() {
 
         let currentIndex = boardListArr.findIndex(item => item == moveList);
 
+        // 判断位置有没有发生改变
         if ( currentIndex !== recordBoardListIndex ) {
 
             // 获取上一个和下一个的order数值
             let prevOrder = parseFloat(boardListArr[currentIndex - 1]?.dataset.order);
             let nextOrder = parseFloat(boardListArr[currentIndex + 1]?.dataset.order);
 
+            // 根据 currentIndex 位置计算排序后的 order数值
             if ( currentIndex === 0 ) {
                 order = nextOrder / 2;
             } else if ( currentIndex === boardListArr.length - 1 ) {
@@ -149,6 +153,7 @@ export default function BoardView() {
             let listId =  parseFloat(boardListArr[currentIndex].dataset.id);
             let name = boardListArr[currentIndex].querySelector(".form-field-input").innerHTML;
 
+            // 更新列表排序Api
             await updateBoardListApi({
                 id: listId,
                 boardId: parseInt(id),
@@ -206,7 +211,7 @@ export default function BoardView() {
                                             value: target.value
                                         })
                                     }}
-                                    placeholder="为这张卡片添加标题……" />
+                                    placeholder="为这张列表添加标题……" />
                                 </div>
                             </div>
                             <div className="list-footer">

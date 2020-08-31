@@ -1,7 +1,144 @@
-import React from "react";
-import { Link } from "react-router-dom"
+import React, { useEffect, useRef, useMemo, useState } from "react";
+import { useHistory, useParams, useLocation } from "react-router-dom"
+import { useSelector } from "react-redux";
+import { useEditBoardListCardDataApi, useAddCardAttachmentApi } from "../../store/action/boardListCard";
+import Modal from "../../components/Message";
+import Attachment from "../../components/Attachment";
+import AddComment from "../../components/AddComment";
+import Comment from "../../components/Comment";
+import Pagination from "../../components/Pagination";
+import { useGetCommentApi } from "../../store/action/comment";
+import qs from "qs";
 
 export default function CardView() {
+
+    const history = useHistory();
+
+    // id:boardId  
+    const { id, listId, cardId } = useParams();
+    
+    // 处理 search
+    const {search} = useLocation();
+    let {comPage=1} = qs.parse(search.substr(1))
+
+    const listsData = useSelector(state => state.boardListReducer);
+    const cardsData = useSelector(state => state.boardListCardReducer);
+    const commentData = useSelector(state => state.commentReducer);
+
+    // 用于记录不同，以此为依据进行更新
+    let cardName = useRef('');
+    let cardDescription = useRef('');
+
+    let uploadAtt = useRef(null);
+    let desEdit = useRef(null);
+
+    // 受控
+    let [ cardTitle, setCardTitle ] = useState("");
+    let [ description, setDescription ] = useState("");
+
+    // 修改卡片 Api
+    let editCardApi = useEditBoardListCardDataApi();
+    // 添加附件Api
+    let uploadAttachmentApi = useAddCardAttachmentApi();
+    // 获取评论 Api
+    let getCommentApi = useGetCommentApi();
+
+    // 筛选 列表 卡片 卡片附件
+    function filterData () {
+        const list = listsData.list?.find(item => item.id == listId);
+        const card = cardsData.cards?.find(item => item.id == cardId);
+        return { list, card };
+    }
+    // 防止组件多次更新带来的函数重复执行
+    let { list, card  } = useMemo( filterData, [ listsData, cardsData ]);
+
+    // listsData, cardsData 这两个数据有更新，并且 filterData 筛选出数据出来的时候在进行set
+    useEffect ( () => {
+        if ( card ) {
+            cardName.current = card.name;
+            cardDescription.current = card.description;
+            setCardTitle(card.name);
+            setDescription(card.description);
+        }
+    }, [ listsData, cardsData ] );
+
+    // 第一次请求评论或者请求的评论都是同一个
+    useEffect( () => {
+        if (
+            !commentData.comment.boardListCardId 
+            || 
+            commentData.comment.boardListCardId != cardId 
+            ) {
+            getCommentApi({
+                page: comPage,
+                boardListCardId: cardId
+            })
+        }
+    }, [])
+
+    // 更新卡片标题，更新卡片描述 
+    function editCard (newValue, oldValue, type) {
+       
+        if (newValue !== oldValue && type == "title") {
+
+            try {
+                editCardApi ( cardId, {
+                    boardListId: Number(listId),
+                    name: newValue
+                }, type)
+
+                Modal.info({
+                    ty: "success",
+                    message: "修改标题成功"
+                })
+
+            } catch (e) {}
+
+        } else if ( newValue !== oldValue && type == "des" ) {
+
+            try {
+                editCardApi ( cardId, {
+                    boardListId: Number(listId),
+                    description: newValue
+                }, type)
+
+                Modal.info({
+                    ty: "success",
+                    message: "修改描述成功"
+                })
+
+            } catch (e) {}
+
+        }   
+    }
+    // 上传附件
+    function uploadFileHandle (e) {
+
+        let file = e.target.files[0]
+       
+        try {
+            uploadAttachmentApi({
+                boardListCardId: cardId,
+                file
+            })
+            Modal.info({
+                ty:"success", 
+                message: "上传成功"
+            })
+            uploadAtt.current.value = "";
+        } catch (e) {}
+
+    }
+    // 页面组件点击获取评论数据
+    function setPageHandle (num) {
+        let url = "?" + qs.stringify( {'comPage': num} )
+        history.push(url);
+        getCommentApi({
+            page: num,
+            boardListCardId: cardId
+        })
+    }
+
     return (
         <div className="window-overlay" style={{
             display: "block"
@@ -15,16 +152,27 @@ export default function CardView() {
                         <div className="popup-title-text">
                             <textarea 
                                 className="form-field-input"
-                                value="平台规划"
-                            ></textarea>
+                                value={cardTitle}
+                                onChange={ ( { target } ) => {
+                                    setCardTitle(target.value)
+                                }}
+                                onBlur={({target}) => {
+                                    editCard(target.value, cardName.current, "title");
+                                }}
+                            >{cardName.current}</textarea>
                         </div>
                         <div className="popup-title-detail">
-                            在列表 Done 中
+                            在列表 {list?.name} 中
                         </div>
                     </div>
-                    <Link to="/" className="popup-header-close">
+                    <div 
+                        className="popup-header-close"
+                        onClick={ () => {
+                            history.push(`/board/${id}`)
+                        } }
+                    >
                         <i className="icon icon-close"></i>
-                    </Link>
+                    </div>
                 </div>
                 <div className="popup-content">
                     <div className="window-module">
@@ -34,14 +182,26 @@ export default function CardView() {
                             </div>
                             <div className="title-text">
                                 <h3>描述</h3>
-                                <button className="btn btn-edit">编辑</button>
+                                <button 
+                                    className="btn btn-edit"
+                                    onClick={()=>{
+                                        desEdit.current.focus();
+                                    }}
+                                >编辑</button>
                             </div>
                         </div>
                         <p className="description">
                             <textarea 
+                                ref={desEdit}
+                                value={description}
                                 className="form-field-input"
-                                value="To Do"
-                            ></textarea>
+                                onChange={ ( { target } ) => {
+                                    setDescription(target.value)
+                                } }
+                                onBlur={ ( { target } ) => {
+                                    editCard(target.value, cardDescription.current, "des");
+                                }}
+                            >{ cardDescription.current }</textarea>
                         </p>
                     </div>
                     <div className="window-module">
@@ -54,170 +214,40 @@ export default function CardView() {
                             </div>
                         </div>
                         <ul className="attachments">
-                            <li className="attachment">
-                                <div className="attachment-thumbnail" style={{
-                                    "backgroundImage": "url('https://trello-attachments.s3.amazonaws.com/5ddf961b5e861107e5f2de49/200x200/96d8fa19e335be20c102d394ef4bed71/logo.png')"
-                                }}></div>
-                                <p className="attachment-detail">
-                                    <span className="attachment-thumbnail-name"><strong>icon_nav_button.png</strong></span>
-                                    <span className="attachment-thumbnail-descriptions">
-                                        <span className="datetime">2019年12月29日晚上11点04分</span>
-                                        <span> - </span>
-                                        <u>删除</u>
-                                    </span>
-                                    <span className="attachment-thumbnail-operation">
-                                        <i className="icon icon-card-cover"></i>
-                                        <u>移除封面</u>
-                                    </span>
-                                </p>
-                            </li>
-                            <li className="attachment">
-                                <div className="attachment-thumbnail" style={{
-                                    "backgroundImage": "url('https://trello-attachments.s3.amazonaws.com/5ddf961b5e861107e5f2de49/200x200/96d8fa19e335be20c102d394ef4bed71/logo.png')"
-                                }}></div>
-                                <p className="attachment-detail">
-                                    <span className="attachment-thumbnail-name"><strong>icon_nav_button.png</strong></span>
-                                    <span className="attachment-thumbnail-descriptions">
-                                        <span className="datetime">2019年12月29日晚上11点04分</span>
-                                        <span> - </span>
-                                        <u>删除</u>
-                                    </span>
-                                    <span className="attachment-thumbnail-operation">
-                                        <i className="icon icon-card-cover"></i>
-                                        <u>移除封面</u>
-                                    </span>
-                                </p>
-                            </li>
+                            {
+                                card?.attachments.map(item => {
+                                    return <Attachment 
+                                        key={item.id} 
+                                        attachment={item}
+                                    />
+                                })
+                            }
                         </ul>
                         <div>
-                            <button className="btn btn-edit">添加附件</button>
+                            <button 
+                                className="btn btn-edit"
+                                onClick={() => {
+                                    uploadAtt.current.click();
+                                }}
+                            >添加附件</button>
+                            <input 
+                                ref={uploadAtt}
+                                type="file" 
+                                style={{display: "none"}} 
+                                onChange = { (e) => {
+                                    uploadFileHandle(e);
+                                }}
+                            />
                         </div>
                     </div>
                     <div className="window-module">
-                        <div className="title">
-                            <div className="title-icon">
-                                <i className="icon icon-activity"></i>
-                            </div>
-                            <div className="title-text">
-                                <h3>评论</h3>
-                            </div>
-                        </div>
-                        <div className="comment-post">
-                            <div className="avatar">
-                                <span>Z</span>
-                            </div>
-                            <div className="comment-content-box editing">
-                                <textarea className="comment-content-input" placeholder="添加评论……"></textarea>
-                                <button className="btn btn-edit">保存</button>
-                            </div>
-                        </div>
-                        <ul className="comments">
-                            <li className="comment">
-                                <div className="avatar">
-                                    <span>Z</span>
-                                </div>
-                                <div className="description">
-                                    <div className="header">
-                                        <strong>zMouse</strong>
-                                        <span> at </span>
-                                        <i>2019年12月29日晚上11点04分</i>
-                                    </div>
-                                    <div className="content">
-                                        非常不错！！
-                                    </div>
-                                </div>
-                            </li>
-                            <li className="comment">
-                                <div className="avatar">
-                                    <span>Z</span>
-                                </div>
-                                <div className="description">
-                                    <div className="header">
-                                        <strong>zMouse</strong>
-                                        <span> at </span>
-                                        <i>2019年12月29日晚上11点04分</i>
-                                    </div>
-                                    <div className="content">
-                                        非常不错！！
-                                    </div>
-                                </div>
-                            </li>
-                            <li className="comment">
-                                <div className="avatar">
-                                    <span>Z</span>
-                                </div>
-                                <div className="description">
-                                    <div className="header">
-                                        <strong>zMouse</strong>
-                                        <span> at </span>
-                                        <i>2019年12月29日晚上11点04分</i>
-                                    </div>
-                                    <div className="content">
-                                        非常不错！！
-                                    </div>
-                                </div>
-                            </li>
-                            <li className="comment">
-                                <div className="avatar">
-                                    <span>Z</span>
-                                </div>
-                                <div className="description">
-                                    <div className="header">
-                                        <strong>zMouse</strong>
-                                        <span> at </span>
-                                        <i>2019年12月29日晚上11点04分</i>
-                                    </div>
-                                    <div className="content">
-                                        非常不错！！
-                                    </div>
-                                </div>
-                            </li>
-                            <li className="comment">
-                                <div className="avatar">
-                                    <span>Z</span>
-                                </div>
-                                <div className="description">
-                                    <div className="header">
-                                        <strong>zMouse</strong>
-                                        <span> at </span>
-                                        <i>2019年12月29日晚上11点04分</i>
-                                    </div>
-                                    <div className="content">
-                                        非常不错！！
-                                    </div>
-                                </div>
-                            </li>
-                            <li className="comment">
-                                <div className="avatar">
-                                    <span>Z</span>
-                                </div>
-                                <div className="description">
-                                    <div className="header">
-                                        <strong>zMouse</strong>
-                                        <span> at </span>
-                                        <i>2019年12月29日晚上11点04分</i>
-                                    </div>
-                                    <div className="content">
-                                        非常不错！！
-                                    </div>
-                                </div>
-                            </li>
-                        </ul>
-                        <div className="comment-pagination">
-                            <div className="pagination">
-                                <span>首页</span>
-                                <span>上一页</span>
-                                <span>...</span>
-                                <span>4</span>
-                                <span>5</span>
-                                <span className="current-page">6</span>
-                                <span>7</span>
-                                <span>8</span>
-                                <span>...</span>
-                                <span>下一页</span>
-                                <span>尾页</span>
-                            </div>
-                        </div>
+                        <AddComment boardListCardId={cardId} />
+                        <Comment comments={commentData.comment.rows} />
+                        <Pagination 
+                            count={commentData.comment.count} 
+                            page={comPage}
+                            setPageHandle={setPageHandle}
+                        />
                     </div>
                 </div>
             </div>

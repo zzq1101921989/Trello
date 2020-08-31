@@ -2,7 +2,7 @@ import http from "../http"
 import { useDispatch } from "react-redux";
 
 /**
- * 获取当前面板下的所有列表信息
+ * 获取当前面板下的所有列表信息, 和顺带存储列表下的卡片信息
  */
 export function useGetBoardListApi() {
 
@@ -12,12 +12,22 @@ export function useGetBoardListApi() {
 
         let res = await http.get(`/list?boardId=${id}`);
 
-        console.log("res:", res)
-        
+        // 获取所有列表的 action 动作
         dispatch({
             type: "GET_BOARD_LIST",
             list: res.data
         })
+
+        let cardArr = res.data.map(item => {
+            return item.cards;
+        }).flat()
+        
+        // 获取所有列表中卡片的 action 动作
+        dispatch({
+            type: "GET_BOARD_LIST_CARD_ALL",
+            cards: cardArr
+        })
+
     }
 }
 

@@ -1,12 +1,24 @@
-import React, { useRef, useEffect, useState  } from "react";
+import React, { useRef, useEffect, useState, useCallback } from "react";
 import { useEditBoardListApi } from "../store/action/boardList";
-import { useGetBoardListCardsApi } from "../store/action/boardListCard"
+import { useAddBoardListCardApi } from "../store/action/boardListCard"
 import BoardListCard from "./BoardListCard";
 import Modal from "../components/Message";
+import { useSelector } from "react-redux";
+import Popup from "./Popup";
+import PopupMenu from "./PopupMenu";
 
 export default function BoardList(props) {
 
-    let { name, id, boardId, addEventBoardMove, addEventBoardStart, addEventBoardUp, order, cards } = props;
+    let { name, id, boardId, addEventBoardMove, addEventBoardStart, addEventBoardUp, order } = props;
+
+    // 根据 props解构的 id 也就是当前所渲染列表的 id 筛选出 对应列表中的 卡片
+    let boardListCards = useSelector(state => state.boardListCardReducer);
+
+    // 筛选卡片数据
+    let cards = boardListCards.cards.filter(item => item.boardListId == id);
+
+    // 定义列表删除区域显示状态
+    let [popupState, setPopupState] = useState(false);
     // 定义标题 value
     let [listValue, setListValue] = useState(name);
     // 定义列表添加卡片状态
@@ -19,8 +31,8 @@ export default function BoardList(props) {
     let [isSelect, setSelect] = useState(false);
     // 修改标题 API
     let updateBoardListNameApi = useEditBoardListApi();
-    // 获取列表中所有卡片的信息
-    // let getBoardListCardApi = useGetBoardListCardsApi();
+    // 添加卡片 API
+    let addBoardListCardApi = useAddBoardListCardApi();
     // 保存偏移相关的变量
     let dragOffset = useRef({
         x: 0,
@@ -35,10 +47,14 @@ export default function BoardList(props) {
     let list = useRef(null);
     // 获取拖拽头部
     let listHeader = useRef(null);
-    // 获取标题输入框
+    // 获取添加列表标题输入框
     let listText = useRef(null);
     // 获取列表阴影
     let listMask = useRef(null);
+    // 获取添加卡片输入框
+    let addBoardListCardEle = useRef(null);
+    // 列表功能小按钮
+    let menu = useRef(null)
     // 生命周期
     useEffect(() => {
         listHeader.current.onmousedown = dragDown;
@@ -52,9 +68,9 @@ export default function BoardList(props) {
     }, [isDown, isDrag, isSelect]);
 
     // 按下
-    function dragDown(e) {
+    let dragDown = useCallback(function dragDown(e) {
         // 多给定一个条件减少重复渲染，因为不拖拽修改标题的时候点击也会触发更新，所以需要判断
-        if (!isSelect){
+        if (!isSelect) {
             setDown(true);
             let rect = listHeader.current.getBoundingClientRect();
             dragOffset.current.x = e.clientX;
@@ -63,9 +79,10 @@ export default function BoardList(props) {
             eleOffset.current.top = rect.y;
             addEventBoardStart(list.current.parentNode)
         }
-    };
+    }, [isSelect]);
+
     // 拖拽
-    function dragMove(e) {
+    let dragMove = useCallback(function dragMove(e) {
         if (isDown) {
             let x = e.clientX - dragOffset.current.x;
             let y = e.clientY - dragOffset.current.y;
@@ -82,19 +99,21 @@ export default function BoardList(props) {
                 addEventBoardMove(list.current.parentNode, e.clientX, e.clientY);
             }
         }
-    };
+    }, [isDown]);
+
     // 抬起
-    function dragUp() {
-        if (!isDrag && isDown) {
+    let dragUp = useCallback(function dragUp(e) {
+        if (!isDrag && isDown && e.path.includes(listText.current)) {
             listText.current.select();
             setSelect(true);
-        } else {
+        } else if (e.path.includes(listHeader.current)) {
             list.current.style.position = 'relative';
             list.current.style.zIndex = 0;
             list.current.style.left = 0;
             list.current.style.top = 0;
             list.current.style.transform = 'rotate(0deg)';
             listMask.current.style.height = 0;
+
             addEventBoardUp(list.current.parentNode);
         }
 
@@ -102,13 +121,25 @@ export default function BoardList(props) {
         document.onmouseup = null;
         setDown(false);
         setDrag(false);
-    }
+    }, [isDrag, isDown])
+
+    // Menu功能列表
+    let menuList = [
+        {
+            name: "删除",
+            handler: function () {
+                console.log("删除");
+            }
+        }
+    ]
+
     // 列表标题失去焦点处理事件
-    async function textareaBlurHandle () {
+    async function textareaBlurHandle() {
 
         let { innerHTML } = listText.current;
 
         if (listValue !== innerHTML) {
+
             let res = await updateBoardListNameApi({
                 id,
                 boardId,
@@ -124,10 +155,36 @@ export default function BoardList(props) {
         }
         setSelect(false);
     }
+    // 添加卡片处理事件
+    function addCardHandle() {
+
+        let { value } = addBoardListCardEle.current;
+
+        if (value.trim() === '') {
+
+            addBoardListCardEle.current.focus();
+
+        } else {
+
+            let { value } = addBoardListCardEle.current;
+
+            addBoardListCardApi({
+                boardListId: id,
+                name: value
+            })
+
+            Modal.info({
+                message: "添加成功",
+                ty: "success"
+            });
+
+            addBoardListCardEle.current.value = '';
+        }
+    }
 
     return (
         <div
-            className={`list-wrap list-container ${addCard ? 'list-adding' : ''}`}
+            className={`list-wrap list-container`}
             data-order={order}
             data-id={id}
         >
@@ -140,31 +197,73 @@ export default function BoardList(props) {
                     <textarea
                         className="form-field-input"
                         ref={listText}
-                        onMouseDown={ (e) => {
+                        onMouseDown={(e) => {
                             if (!isSelect) {
                                 e.preventDefault();
                             }
                         }}
-                        onChange={ ({target}) => {
+                        onChange={({ target }) => {
                             setListValue(target.value);
                         }}
                         onBlur={textareaBlurHandle}
                     >{name}</textarea>
-                    <div className="extras-menu">
-                        <span className="icon icon-more"></span>
-                    </div>
+                    <Popup
+                        show={popupState}
+                        setShow={setPopupState}
+                        title="操作"
+                        content={ <PopupMenu items={menuList} /> }
+                    >
+                        <div
+                            className="extras-menu"
+                            ref={menu}
+                            onClick={(e) => {
+                                setPopupState(!popupState)
+                            }}
+                        >
+                            <span className="icon icon-more"></span>
+                        </div>
+                    </Popup>
+
                 </div>
                 {/* 卡片列表内容 */}
-                <BoardListCard cards={cards} />
+                <BoardListCard
+                    cards={cards}
+                    boardId={boardId}
+                    boardListId={id}
+                />
                 {/* 卡片列表尾部 */}
-                <div className="list-footer">
-                    <div className="list-card-add">
+                <div className={`list-footer ${addCard ? 'list-adding' : ''}`}>
+                    <div
+                        className="list-card-add"
+                        onClick={() => {
+                            setAddCard(true);
+                            setTimeout(() => {
+                                addBoardListCardEle.current.focus();
+                            })
+                        }}
+                    >
                         <span className="icon icon-add"></span>
                         <span>添加另一张卡片</span>
                     </div>
+                    <div className="list-card-add-form">
+                        <textarea
+                            className="form-field-input"
+                            placeholder="为这张卡片添加标题……"
+                            ref={addBoardListCardEle}
+                        ></textarea>
+                    </div>
                     <div className="list-add-confirm">
-                        <button className="btn btn-success">添加卡片</button>
-                        <span className="icon icon-close"></span>
+                        <button
+                            className="btn btn-success"
+                            onClick={addCardHandle}
+                        >添加卡片</button>
+                        <span
+                            className="icon icon-close"
+                            onClick={() => {
+                                setAddCard(false);
+                                addBoardListCardEle.current.value = ''
+                            }}
+                        ></span>
                     </div>
                 </div>
             </div>
